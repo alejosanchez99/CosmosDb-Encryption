@@ -11,21 +11,12 @@ public static class CosmosDb
 {
     public static CosmosDbConfiguration CosmosDbConfiguration { get; set; }
     private static readonly Database Database;
-  
+
 
     static CosmosDb()
     {
-        CosmosDbConfiguration = BuildCosmosDbConfiguration();
+        CosmosDbConfiguration = GetCosmosDbConfiguration();
         Database = GetDatabaseAsync().GetAwaiter().GetResult();
-    }
-
-    private static CosmosDbConfiguration? BuildCosmosDbConfiguration()
-    {
-        IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .Build();
-
-        return configuration.Get<CosmosDbConfiguration>();
     }
 
     public static async Task CreateContainerEncryptionPolicyAsync()
@@ -46,7 +37,7 @@ public static class CosmosDb
         await containerWithEncryption.CreateItemAsync(order2, new PartitionKey(order2.AccountNumber));
     }
 
-    public static async Task GetItemById()
+    public static async Task GetItemByIdAsync()
     {
         string salesOrderId = "134e833d-0440-4ba6-956a-5d8cc2ecf401";
 
@@ -57,7 +48,7 @@ public static class CosmosDb
         Console.WriteLine(JsonConvert.SerializeObject(readResponse.Resource));
     }
 
-    public static async Task GetItemByQuery()
+    public static async Task GetItemsByQueryAsync()
     {
         Container containerWithEncryption = await GetContainerWithEncryption();
         QueryDefinition queryDefinition = await BuildQueryDefition(containerWithEncryption);
@@ -69,10 +60,19 @@ public static class CosmosDb
         Console.WriteLine(JsonConvert.SerializeObject(currentResultSet.Resource));
     }
 
+    private static CosmosDbConfiguration GetCosmosDbConfiguration()
+    {
+        IConfigurationRoot configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
+
+        return configuration.Get<CosmosDbConfiguration>();
+    }
+
     private static async Task<Database> GetDatabaseAsync()
     {
         string databaseName = CosmosDbConfiguration.DatabaseName;
-        
+
         CosmosClient client = GetClient();
 
         await client.CreateDatabaseIfNotExistsAsync(databaseName);
